@@ -6,7 +6,7 @@
 
 A comprehensive web security scanning tool designed to analyze HTTP headers, identify vulnerabilities, and provide actionable security insights.
 
-![NOCER Interface](.github/screenshot.png) *Add screenshot after implementation*
+![NOCER Interface](https://github.com/PiCarODD/nocer-v2/blob/main/public/css/image.png) 
 
 ## Key Features
 
