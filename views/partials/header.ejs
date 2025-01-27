@@ -1,0 +1,324 @@
+<meta charset="UTF-8">
+<title>Deep Scanner</title>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!-- Material UI CSS -->
+<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+<!-- Custom CSS -->
+<style>
+    :root {
+        --primary-color: #6200ee;
+        --secondary-color: #03dac6;
+        --background: #ffffff;
+        --surface: #ffffff;
+        --error: #b00020;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Roboto', sans-serif;
+        background: #f5f5f5;
+    }
+
+    .app-container {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        height: 100vh;
+    }
+    .security-category {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.security-category h4 {
+    margin: 0 0 0.5rem 0;
+    color: #666;
+}
+
+    .sidebar {
+        background: white;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        padding: 16px;
+    }
+
+    .main-content {
+        padding: 24px;
+        background: #fafafa;
+    }
+
+    .chat-list-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    <!-- Main Content -->
+<div class="main-content">
+    <!-- Header Section -->
+    <header class="content-header">
+        <h2 class="mdc-typography--headline5">
+            <% if (activeChat) { %>
+                <%= activeChat.name %> • Scans Analysis
+                <span class="mdc-typography--subtitle2 text-muted">
+                    Last updated: <%= new Date(activeChat.updatedAt).toLocaleString() %>
+                </span>
+            <% } else { %>
+                New Security Scan Session
+            <% } %>
+        </h2>
+        <div class="header-actions">
+            <button class="mdc-icon-button" title="Export Report">
+                <i class="material-icons">download</i>
+            </button>
+            <button class="mdc-icon-button" title="Settings">
+                <i class="material-icons">settings</i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Scan Results Container -->
+    <div class="results-container mdc-layout-grid">
+        <div class="mdc-layout-grid__inner">
+            <% if (activeChat?.scans?.length) { %>
+                <% activeChat.scans.forEach(scan => { %>
+                    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+                        <!-- Scan Card -->
+                        <div class="mdc-card scan-card <%= scan.status === 'failed' ? 'scan-error' : '' %>">
+                            <div class="mdc-card__primary-action" onclick="toggleScanDetails('<%= scan._id %>')">
+                                <div class="scan-summary">
+                                    <div class="scan-meta">
+                                        <span class="mdc-typography--subtitle1">
+                                            <i class="material-icons">link</i>
+                                            <%= new URL(scan.url).hostname %>
+                                        </span>
+                                        <span class="mdc-typography--caption">
+                                            <%= new Date(scan.createdAt).toLocaleString() %>
+                                        </span>
+                                    </div>
+                                    <div class="scan-status">
+                                        <% if (scan.status === 'completed') { %>
+                                            <span class="mdc-chip mdc-chip--success">
+                                                <i class="material-icons mdc-chip__icon">check_circle</i>
+                                                <span class="mdc-chip__text">Completed</span>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="mdc-chip mdc-chip--error">
+                                                <i class="material-icons mdc-chip__icon">error</i>
+                                                <span class="mdc-chip__text">Failed</span>
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden Details -->
+                            <div class="scan-details" id="scan-details-<%= scan._id %>" aria-hidden="true">
+                                <% if (scan.status === 'completed') { %>
+                                    <div class="results-table">
+                                        <div class="mdc-data-table">
+                                            <table class="mdc-data-table__table">
+                                                <!-- Table content remains same -->
+                                            </table>
+                                        </div>
+                                    </div>
+                                <% } else { %>
+                                    <div class="error-details mdc-typography--body2">
+                                        <i class="material-icons">error_outline</i>
+                                        <div class="error-content">
+                                            <h4 class="mdc-typography--subtitle2">Error Details:</h4>
+                                            <code><%= scan.error %></code>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <!-- Empty State -->
+                <div class="empty-state mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+                    <div class="mdc-empty-state">
+                        <i class="material-icons mdc-empty-state__icon">search_off</i>
+                        <h3 class="mdc-typography--subtitle1">No Security Scans Found</h3>
+                        <p class="mdc-typography--body2">Initiate a new scan using the form below</p>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="input-container">
+        <div class="mdc-card scan-form-card">
+            <form action="/scan" method="POST">
+                <!-- Form content remains same -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Professional Styling */
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background: #f8f9fa;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .results-container {
+        flex: 1;
+        padding: 1rem 2rem;
+        overflow-y: auto;
+    }
+
+    .scan-card {
+        margin-bottom: 1rem;
+        transition: box-shadow 0.3s ease;
+    }
+
+    .scan-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .scan-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    .scan-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .input-container {
+        padding: 1rem 2rem;
+        background: white;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+    }
+
+    .scan-form-card {
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .error-details {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: #fff5f5;
+        color: #dc3545;
+        gap: 1rem;
+    }
+
+    .text-muted {
+        color: #6c757d;
+    }
+    .chat-list-item:hover {
+        background: rgba(0,0,0,0.04);
+    }
+
+    .chat-list-item.active {
+        background: rgba(98,0,238,0.08);
+    }
+    .view-result-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+    }
+    .scan-details {
+        margin-top: 16px;
+        transition: opacity 0.3s ease;
+    }
+
+    .url-input-container {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: calc(100% - 300px);
+        padding: 24px;
+        background: white;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+
+    .scan-results {
+        margin-bottom: 200px;
+    }
+
+    .mdc-text-field {
+        width: 100%;
+    }
+    .scan-options {
+        margin: 20px 0;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+
+    .scan-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .scan-option:hover {
+        background: #eee;
+    }
+
+    .scan-option.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .scan-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+    }
+    .status-indicator {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .status-indicator.present {
+        background-color: #00C853;
+        color: white;
+    }
+
+    .status-indicator.missing {
+        background-color: #D50000;
+        color: white;
+    }
+    .chat-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.delete-btn:hover {
+    color: #dc3545;
+}
+</style>

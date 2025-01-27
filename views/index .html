@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/header') %>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="mdc-button mdc-button--raised" onclick="createChat()">
+                <span class="mdc-button__label">+ New Chat</span>
+            </button>
+
+            <div class="mdc-list">
+                <% chats.forEach(chat => { %>
+                    
+                    <div class="chat-list-item <%= chat._id === activeChat?._id ? 'active' : '' %>"
+                         data-chat-id="<%= chat._id %>"
+                         onclick="selectChat('<%= chat._id %>')">
+                        <i class="material-icons mdc-list-item__graphic">forum</i>
+                        <span class="mdc-list-item__text">
+                            <span class="mdc-list-item__primary-text"><%= chat.name %></span>
+                            <span class="mdc-list-item__secondary-text">
+                                <%= chat.scans.length %> scans • 
+                                <%= new Date(chat.createdAt).toLocaleDateString() %>
+                            </span>
+                        </span>
+                        <button class="mdc-icon-button" onclick="renameChat(event, '<%= chat._id %>')">
+                            <i class="material-icons">edit</i>
+                        </button>
+                        <button class="mdc-icon-button delete-btn" onclick="deleteChat(event, '<%= chat._id %>')">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Scan Results -->
+            <div class="scan-results">
+                <% if (activeChat?.scans?.length) { %>
+                    <% activeChat.scans.forEach(scan => { %>
+                        <div class="mdc-card <%= scan.status === 'failed' ? 'scan-error' : '' %>">
+                            <div class="mdc-card__primary-action">
+                                <div class="mdc-card__content">
+                                    <h3 class="mdc-typography--headline6">
+                                        <a href="<%= scan.url %>"><%= scan.url %></a>
+                                        <% if (scan.status === 'failed') { %>
+                                            <span class="mdc-chip mdc-chip--error">
+                                                <span class="mdc-chip__text">Failed</span>
+                                            </span>
+                                        <% } %>
+                                    </h3>
+                                    
+                                    <% if (scan.status === 'completed') { %>
+                                        <div class="mdc-data-table">
+                                            <table class="mdc-data-table__table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Header</th>
+                                                        <th>Status</th>
+                                                        <th>Value</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <% requiredHeaders.forEach(header => { %>
+                                                        <% const value = scan.headers.get(header.toLowerCase()) %>
+                                                        <tr class="mdc-data-table__row">
+                                                            <td class="mdc-data-table__cell"><%= header %></td>
+                                                            <td class="mdc-data-table__cell">
+                                                                <span class="status-indicator <%= value ? 'present' : 'missing' %>">
+                                                                    <%= value ? 'Present' : 'Missing' %>
+                                                                </span>
+                                                            </td>
+                                                            <td class="mdc-data-table__cell"><%= value || 'N/A' %></td>
+                                                        </tr>
+                                                    <% }); %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="mdc-typography--body2 error-message">
+                                            Error: <%= scan.error %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="mdc-empty-state">
+                        <i class="material-icons mdc-empty-state__icon">search_off</i>
+                        <h3 class="mdc-typography--subtitle1">No scans found</h3>
+                        <p class="mdc-typography--body2">Enter URLs below to start scanning</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Input Form -->
+            <div class="url-input-container">
+                <form action="/scan" method="POST">
+                    <input type="hidden" name="chatId" value="<%= activeChat?._id %>">
+                    
+                    <!-- Single URL Input -->
+                    <div class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon">
+                        <i class="material-icons mdc-text-field__icon">link</i>
+                        <input 
+                            type="url" 
+                            class="mdc-text-field__input"
+                            name="url" 
+                            id="url-input"
+                            placeholder="https://example.com"
+                            pattern="https?://.+"
+                            required
+                            value="<%= locals.errorData?.url || '' %>"
+                        >
+                        <div class="mdc-notched-outline">
+                            <div class="mdc-notched-outline__leading"></div>
+                            <div class="mdc-notched-outline__notch">
+                                <label for="url-input" class="mdc-floating-label"></label>
+                            </div>
+                            <div class="mdc-notched-outline__trailing"></div>
+                        </div>
+                    </div>
+            
+                    <!-- Scan Type Selection -->
+                    <div class="scan-options">
+                        <label class="scan-option">
+                            <input type="checkbox" name="subdomainScan" checked>
+                            <i class="material-icons">dns</i>
+                            <span>Subdomain Scan</span>
+                        </label>
+                        
+                        <label class="scan-option">
+                            <input type="checkbox" name="nucleiScan" checked>
+                            <i class="material-icons">security</i>
+                            <span>Nuclei Scan</span>
+                        </label>
+
+                        <label class="scan-option">
+                            <input type="checkbox" name="Crawler" checked>
+                            <i class="material-icons">sync_problem</i>
+                            <span>Crawler</span>
+                        </label>
+                        <% Object.entries(securityOptions).forEach(([category, checks]) => { %>
+                            <div class="security-category">
+                                <h4><%= category %></h4>
+                                <% checks.forEach(check => { %>
+                                    <label class="scan-option">
+                                        <input type="checkbox" name="securityOptions[<%= category %>][<%= check %>]">
+                                        <span><%= check %></span>
+                                    </label>
+                                <% }); %>
+                            </div>
+                        <% }); %>
+                    </div>
+            
+                    <% if (locals.errorData?.error) { %>
+                        <div class="error-message">
+                            <i class="material-icons">error</i>
+                            <span><%= locals.errorData.error %></span>
+                        </div>
+                    <% } %>
+            
+                    <div class="form-actions">
+                        <button type="submit" class="mdc-button mdc-button--raised mdc-button--large">
+                            <i class="material-icons mdc-button__icon">search</i>
+                            <span class="mdc-button__label">Start Scan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>            
+        </div>
+    </div>
+
+    <!-- Material UI JS -->
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <!-- Tagify -->
+    <script src="https://unpkg.com/@yaireo/tagify"></script>
+    <script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+    
+    <script>
+        // Initialize Material UI
+        window.mdc.autoInit();
+        document.querySelectorAll('.scan-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                option.classList.toggle('active', checkbox.checked);
+            }
+        });
+    });
+    document.getElementById('url-input').addEventListener('input', function(e) {
+        // Remove any spaces or line breaks
+        this.value = this.value.replace(/\s+/g, '');
+        
+        // Ensure only one URL
+        
+    });
+    function deleteChat(event, chatId) {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this chat and all its scans?')) {
+        fetch(`/chats/${chatId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload(); // Refresh to update the list
+            } else {
+                alert('Error deleting chat');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+        // Initialize Tagify
+        const input = document.querySelector('#urls-input');
+        const tagify = new Tagify(input, {
+            pattern: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
+            dropdown: { enabled: 0 },
+            originalInputValueFormat: values => 
+                JSON.stringify(values.map(item => ({ value: item.value }))),
+            transformTag: tag => {
+                try {
+                    new URL(tag.value);
+                    tag.style.backgroundColor = '';
+                } catch {
+                    tag.style.backgroundColor = '#ff4444';
+                }
+            }
+        });
+
+        function createChat() {
+            fetch('/chats', { method: 'POST' })
+                .then(() => window.location.reload());
+        }
+
+        function selectChat(chatId) {
+            window.location.href = `/chats/${chatId}`;
+        }
+
+        function renameChat(event, chatId) {
+            event.stopPropagation();
+            const newName = prompt('Enter new chat name:');
+            if (newName) {
+                fetch(`/chats/${chatId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                }).then(() => window.location.reload());
+            }
+        }
+
+        function clearForm() {
+            tagify.removeAllTags();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/header') %>
+  <title>Scan Comparison</title>
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo">NOCER</div>
+    <a href="/" class="mdc-button">Back to Dashboard</a>
+  </header>
+
+  <div class="comparison-container">
+    <h2>Scan Comparison</h2>
+    
+    <% scans.forEach(scan => { %>
+      <div class="mdc-card comparison-card">
+        <h3><%= scan.url %></h3>
+        <div class="mdc-data-table">
+          <table class="mdc-data-table__table">
+            <thead>
+              <tr>
+                <th>Header</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requiredHeaders.forEach(header => { %>
+                <tr>
+                  <td><%= header %></td>
+                  <td>
+                    <%= scan.missing.includes(header) ? 'Missing' : 'Present' %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</body>
+</html>
