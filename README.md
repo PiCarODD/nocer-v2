@@ -16,15 +16,15 @@ A comprehensive web security scanning tool designed to analyze HTTP headers, ide
   Checks for 7 essential security headers with implementation suggestions
 - **Cross-Scan Comparison**  
   Compare multiple scan results to track security improvements
-- **CSV Export**  
+- **CSV Export**  - Future release
   Generate portable reports of scan results
-- **Responsive Design**  
+- **Responsive Design**  - Future release
   Fully functional on desktop and mobile devices
 - **Interactive UI**  
   Material Design components with hover effects and loading indicators
 - **Security Checks**  
-  - Subdomain enumeration
-  - Nuclei vulnerability scanning
+  - Subdomain enumeration - Future release
+  - Nuclei vulnerability scanning  - Future release
   - Header configuration analysis
 
 ## Installation
