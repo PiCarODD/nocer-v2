@@ -37,11 +37,14 @@ A comprehensive web security scanning tool designed to analyze HTTP headers, ide
 ### Setup
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/nocer.git
-cd nocer
+git clone https://github.com/PiCarODD/nocer-v2
+cd nocer-v2
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env
+
+# Run
+npm start or node server/server.js
