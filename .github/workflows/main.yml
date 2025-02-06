@@ -13,6 +13,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Install NPM Dependencies
+        run: npm install  # Fixes missing dependencies issue
+
       - name: Download SCA-BOM-Detect
         run: |
           curl -sSL https://download.scantist.io/sca-bom-detect-v4.5.jar --output sca-bom-detect-v4.5.jar
@@ -20,17 +23,22 @@ jobs:
       - name: Run SCA-BOM-Detect Scan
         env:
           DEVSECOPS_TOKEN: ${{ secrets.PENTEST }}
+          DEVSECOPS_IMPORT_URL: "https://api-app.scantist.io/v2/scans/ci-scan/"
         run: |
           java -jar sca-bom-detect-v4.5.jar \
             -t ${DEVSECOPS_TOKEN} \
             -f . \
             -reportFormat json \
-            -reportPath scantist-scan.json
+            -reportPath scantist-scan.json \
+            -serverUrl ${DEVSECOPS_IMPORT_URL}
+
+      - name: Verify Scan Report Exists
+        run: ls -lah scantist-scan.json  # Ensures the file exists before upload
 
       - name: Upload Scan Results to Scantist DevSecOps
         env:
           DEVSECOPS_TOKEN: ${{ secrets.PENTEST }}
-          DEVSECOPS_IMPORT_URL: https://api-app.scantist.io/v2/scans/ci-scan/
+          DEVSECOPS_IMPORT_URL: "https://api-app.scantist.io/v2/scans/ci-scan/"
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${DEVSECOPS_TOKEN}" \
