@@ -18,10 +18,14 @@ jobs:
           curl -sSL https://download.scantist.io/sca-bom-detect-v4.5.jar --output sca-bom-detect-v4.5.jar
 
       - name: Run SCA-BOM-Detect Scan
+        env:
+          DEVSECOPS_TOKEN: ${{ secrets.PENTEST }}
         run: |
-          # Run the scanner against the current repository.
-          # Adjust the command-line parameters according to your needs.
-          java -jar sca-bom-detect-v4.5.jar --project-dir . --output-format json --output-file scantist-scan.json
+          java -jar sca-bom-detect-v4.5.jar \
+            -t ${DEVSECOPS_TOKEN} \
+            -f . \
+            -reportFormat json \
+            -reportPath scantist-scan.json
 
       - name: Upload Scan Results to Scantist DevSecOps
         env:
